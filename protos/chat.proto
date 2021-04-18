@@ -1,0 +1,26 @@
+syntax = "proto3";
+package chat; 
+
+import "google/protobuf/timestamp.proto";
+option go_package = "chat/models";
+
+message Message{
+    string Body = 1;  
+    string Sender = 2;
+    string Reciever = 3;
+    google.protobuf.Timestamp Sent = 4;
+}
+
+message Success{
+    bool Value = 1;
+}
+
+message LoginRequest{
+    string Username = 1; 
+    string password = 2;
+}
+
+service ChatService{
+    rpc Login(LoginRequest) returns (stream Message);
+    rpc SendChat(Message) returns (Success); 
+}
