@@ -11,7 +11,7 @@ import (
 
 func main() {
 	var Connections []*server.Connection
-	server := &server.Server{Connections: Connections}
+	server := server.Server{Connections: Connections}
 
 	grpcserver := grpc.NewServer()
 	lis, err := net.Listen("tcp", ":8080")
@@ -20,6 +20,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	models.RegisterChatServiceServer(grpcserver, server)
+	models.RegisterChatServiceServer(grpcserver, &server)
 	grpcserver.Serve(lis)
 }

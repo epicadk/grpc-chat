@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"log"
 	"sync"
 
 	"github.com/epicadk/grpc-chat/models"
@@ -32,12 +33,14 @@ func (s *Server) Login(loginRequset *models.LoginRequest, stream models.ChatServ
 }
 
 func (s *Server) SendChat(ctx context.Context, message *models.Message) (*models.Success, error) {
+	log.Println(message)
 	wg := sync.WaitGroup{}
 	for _, con := range s.Connections {
-		// Can add multiple Recivers
+		// can add multiple Recivers
+		// if reciever is not here store in database
 		if message.Reciever == con.id {
 			wg.Add(1)
-			handleMessages(message, con, &wg)
+			go handleMessages(message, con, &wg)
 		}
 	}
 	wg.Wait()
