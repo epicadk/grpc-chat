@@ -14,13 +14,17 @@ import (
 
 func init() {
 	var err error
+	// TODO use env vars
 	var dns = "host=db user=postgres password=postgres dbname=chats port=5432 sslmode=disable TimeZone=Asia/Kolkata"
 	db.DBconn, err = gorm.Open(postgres.Open(dns), &gorm.Config{})
+
 	if err != nil {
 		panic("Error Connecting to database")
 	}
-	println("connected")
+
+	db.DBconn.AutoMigrate(&db.Chat{})
 }
+
 func main() {
 	var Connections []*server.Connection
 	server := server.Server{Connections: Connections}

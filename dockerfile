@@ -1,4 +1,4 @@
-FROM golang:latest
+FROM golang:1.15
 
 COPY ./go.mod $GOPATH/dockerBuild/go.mod
 COPY ./go.sum $GOPATH/dockerBuild/go.sum
