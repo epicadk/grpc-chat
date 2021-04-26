@@ -1,5 +1,6 @@
 package main
 
+// Simple client in go
 import (
 	"bufio"
 	"context"
