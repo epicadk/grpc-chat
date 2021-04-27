@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net"
+	"time"
 
 	"github.com/epicadk/grpc-chat/db"
 	"github.com/epicadk/grpc-chat/models"
@@ -19,16 +20,27 @@ func init() {
 	db.DBconn, err = gorm.Open(postgres.Open(dns), &gorm.Config{})
 
 	if err != nil {
-		panic("Error Connecting to database")
+		panic("error connecting to database")
 	}
 
-	db.DBconn.AutoMigrate(&db.Chat{})
+	err = db.DBconn.AutoMigrate(&db.Chat{})
+
+	if err != nil {
+		panic("error in auto migration")
+	}
 }
 
 func main() {
-	var Connections []*server.Connection
+	Connections := make(map[string]*server.Connection)
 	server := server.Server{Connections: Connections}
-
+	go func() {
+		for {
+			for k := range Connections {
+				log.Printf(k)
+			}
+			time.Sleep(time.Second * 5)
+		}
+	}()
 	grpcserver := grpc.NewServer()
 	lis, err := net.Listen("tcp", ":8080")
 
@@ -37,5 +49,7 @@ func main() {
 	}
 
 	models.RegisterChatServiceServer(grpcserver, &server)
-	grpcserver.Serve(lis)
+	if err := grpcserver.Serve(lis) ; err !=nil {
+		log.Fatal(err)
+	}
 }

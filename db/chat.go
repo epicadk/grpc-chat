@@ -1,9 +1,7 @@
 package db
 
-import "gorm.io/gorm"
-
 type Chat struct {
-	gorm.Model
+	ID       uint64
 	Sender   string
 	Body     string
 	Reciever string `gorm:"index"`
