@@ -5,9 +5,11 @@ import (
 	"log"
 	"sync"
 
-	"github.com/epicadk/grpc-chat/db"
+	"github.com/epicadk/grpc-chat/db/dao"
 	"github.com/epicadk/grpc-chat/models"
 )
+
+var chatDao dao.ChatDao
 
 //Connection Represents a connection to the server.
 type Connection struct {
@@ -28,10 +30,9 @@ func (s *Server) Login(loginRequset *models.LoginRequest, stream models.ChatServ
 		active: true,
 		err:    make(chan error),
 	}
-	var messages []db.Chat
-	res := db.DBconn.Where("Reciever = ?", loginRequset.Username).Find(&messages)
-	if res.Error != nil {
-		return res.Error
+	messages, err := chatDao.FindChat(loginRequset.Username)
+	if err != nil {
+		return err
 	}
 	for _, v := range messages {
 		// TODO probably create a DAO struct
@@ -41,9 +42,10 @@ func (s *Server) Login(loginRequset *models.LoginRequest, stream models.ChatServ
 			Reciever: v.Reciever,
 			Sent:     int64(v.Sent),
 		})
+		chatDao.DeleteChat(&v)
+
 	}
 
-	db.DBconn.Delete(messages, "Reciever = ?", loginRequset.Username)
 	s.Connections = append(s.Connections, conn)
 	// return is blocked till conn.err gets an error
 	return <-conn.err
@@ -63,14 +65,9 @@ func (s *Server) SendChat(ctx context.Context, message *models.Message) (*models
 		}
 	}
 	if !f {
-		res := db.DBconn.Create(&db.Chat{
-			Sender:   message.Sender,
-			Body:     message.Body,
-			Reciever: message.Reciever,
-			Sent:     uint64(message.Sent),
-		})
-		if res.Error != nil {
-			log.Fatal(res.Error)
+		err := chatDao.SaveChat(message)
+		if err != nil {
+			log.Fatal(err)
 		}
 	}
 
