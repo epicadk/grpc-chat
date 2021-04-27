@@ -27,7 +27,7 @@ func (cd ChatDao) DeleteChat(chat *db.Chat) error {
 
 func (cd ChatDao) FindChat(rec string) ([]db.Chat, error) {
 	var chats []db.Chat
-	tx := db.DBconn.Find(chats, "Reciever= ?", rec)
+	tx := db.DBconn.Find(&chats, "Reciever= ?", rec)
 	if tx.Error != nil {
 		return nil, tx.Error
 	}
