@@ -30,7 +30,7 @@ func main() {
 	client = models.NewChatServiceClient(conn)
 	fmt.Scanln(&a)
 	fmt.Println(a)
-	sendMessage(&models.LoginRequest{Username: a, Password: "random", Active: true})
+	sendMessage(&models.LoginRequest{Username: a, Password: "random"})
 	wg.Add(1)
 	go func() {
 		defer wg.Done()

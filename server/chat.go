@@ -5,9 +5,8 @@ import (
 	"log"
 	"sync"
 
-	"github.com/epicadk/grpc-chat/db/dao"
+	"github.com/epicadk/grpc-chat/dao"
 	"github.com/epicadk/grpc-chat/models"
-	"github.com/epicadk/grpc-chat/utils"
 )
 
 //Connection Represents a connection to the server.
@@ -37,11 +36,11 @@ func (s *Server) Login(loginRequset *models.LoginRequest, stream models.ChatServ
 
 	for _, v := range messages {
 
-		if err := conn.stream.Send(utils.ChatDbToProto(&v)); err != nil {
+		if err := conn.stream.Send(v); err != nil {
 			return err
 		}
 
-		if err := chatDao.DeleteChat(&v); err != nil {
+		if err := chatDao.DeleteChat(v); err != nil {
 			log.Fatal(err)
 		}
 
@@ -80,7 +79,7 @@ func (s *Server) SendChat(ctx context.Context, message *models.Message) (*models
 
 	wg.Wait()
 	if !f {
-		err := chatDao.SaveChat(message)
+		err := chatDao.CreateChat(message)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -90,9 +89,9 @@ func (s *Server) SendChat(ctx context.Context, message *models.Message) (*models
 }
 
 func (s *Server) Register(ctx context.Context, user *models.User) (*models.RegisterResponse, error) {
-	id, err := userDao.SaveUser(user)
+	err := userDao.Create(user)
 	if err != nil {
 		return nil, err
 	}
-	return &models.RegisterResponse{UserID: id}, nil
+	return &models.RegisterResponse{UserID: user.UserID}, nil
 }
