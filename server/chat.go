@@ -7,7 +7,7 @@ import (
 
 	"github.com/epicadk/grpc-chat/db/dao"
 	"github.com/epicadk/grpc-chat/models"
-	"github.com/epicadk/grpc-chat/utils/mappers"
+	"github.com/epicadk/grpc-chat/utils"
 )
 
 //Connection Represents a connection to the server.
@@ -22,9 +22,9 @@ type Server struct {
 }
 
 var chatDao dao.ChatDao
+var userDao dao.UserDao
 
 func (s *Server) Login(loginRequset *models.LoginRequest, stream models.ChatService_LoginServer) error {
-
 	conn := &Connection{
 		stream: stream,
 		err:    make(chan error),
@@ -37,7 +37,7 @@ func (s *Server) Login(loginRequset *models.LoginRequest, stream models.ChatServ
 
 	for _, v := range messages {
 
-		if err := conn.stream.Send(mappers.ToNetwork(&v)); err != nil {
+		if err := conn.stream.Send(utils.ChatDbToProto(&v)); err != nil {
 			return err
 		}
 
@@ -87,4 +87,12 @@ func (s *Server) SendChat(ctx context.Context, message *models.Message) (*models
 	}
 
 	return &models.Success{}, nil
+}
+
+func (s *Server) Register(ctx context.Context, user *models.User) (*models.RegisterResponse, error) {
+	id, err := userDao.SaveUser(user)
+	if err != nil {
+		return nil, err
+	}
+	return &models.RegisterResponse{UserID: id}, nil
 }

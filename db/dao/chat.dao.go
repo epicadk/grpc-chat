@@ -5,7 +5,7 @@ import (
 
 	"github.com/epicadk/grpc-chat/db"
 	"github.com/epicadk/grpc-chat/models"
-	"github.com/epicadk/grpc-chat/utils/mappers"
+	"github.com/epicadk/grpc-chat/utils"
 	"gorm.io/gorm"
 )
 
@@ -13,7 +13,7 @@ type ChatDao struct{}
 
 func (cd ChatDao) SaveChat(chat *models.Message) error {
 
-	tx := db.DBconn.Create(mappers.ToDB(chat))
+	tx := db.DBconn.Create(utils.ChatProtoToD(chat))
 	if tx.Error != nil {
 		return tx.Error
 	}
