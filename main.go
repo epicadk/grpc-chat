@@ -24,7 +24,11 @@ func init() {
 	}
 
 	err = db.DBconn.AutoMigrate(&db.Chat{})
-
+	if err != nil {
+		panic("error in auto migration")
+	}
+	db.DBconn.Exec("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";")
+	err = db.DBconn.AutoMigrate(&db.User{})
 	if err != nil {
 		panic("error in auto migration")
 	}

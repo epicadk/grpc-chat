@@ -6,13 +6,14 @@ import (
 )
 
 type User struct {
-	ID          string `gorm:"default:uuid_generate_v3()"`
+	ID          string `gorm:"default:uuid_generate_v4()"`
 	Phonenumber string `gorm:"primaryKey;index"`
 	DisplayName string `gorm:"not null"`
 	Password    string `gorm:"not null"`
 }
 
-func (user *User) BeforeCreate(tx gorm.DB) error {
+// GORM hook, validate data here.
+func (user *User) BeforeCreate(tx *gorm.DB) error {
 	hashedpass, err := utils.HashPassword(user.Password)
 	if err != nil {
 		return err

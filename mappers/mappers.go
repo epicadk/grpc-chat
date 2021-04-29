@@ -1,5 +1,5 @@
 // TODO improve this
-package utils
+package mappers
 
 import (
 	"github.com/epicadk/grpc-chat/db"

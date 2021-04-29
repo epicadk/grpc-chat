@@ -2,15 +2,15 @@ package dao
 
 import (
 	"github.com/epicadk/grpc-chat/db"
+	"github.com/epicadk/grpc-chat/mappers"
 	"github.com/epicadk/grpc-chat/models"
-	"github.com/epicadk/grpc-chat/utils"
 )
 
 type ChatDao struct{}
 
 // TODO some validation
 func (cd *ChatDao) CreateChat(msg *models.Message) error {
-	return utils.ChatProtoToDB(msg).SaveToDB()
+	return mappers.ChatProtoToDB(msg).SaveToDB()
 }
 
 func (cd *ChatDao) FindChat(userID string) ([]*models.Message, error) {
@@ -23,11 +23,11 @@ func (cd *ChatDao) FindChat(userID string) ([]*models.Message, error) {
 	}
 	var msgs []*models.Message
 	for _, v := range chats {
-		msgs = append(msgs, utils.ChatDBToProto(&v))
+		msgs = append(msgs, mappers.ChatDBToProto(&v))
 	}
 	return msgs, nil
 }
 
 func (cd *ChatDao) DeleteChat(msg *models.Message) error {
-	return utils.ChatProtoToDB(msg).DeleteChat()
+	return mappers.ChatProtoToDB(msg).DeleteChat()
 }

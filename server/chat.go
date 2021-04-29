@@ -25,6 +25,7 @@ var userDao dao.UserDao
 
 func (s *Server) Login(loginRequest *models.LoginRequest, stream models.ChatService_LoginServer) error {
 	err := userDao.CheckCredentials(loginRequest.Phonenumber, loginRequest.Password)
+	log.Println(loginRequest.Phonenumber)
 
 	if err != nil {
 		return err
@@ -46,7 +47,6 @@ func (s *Server) Login(loginRequest *models.LoginRequest, stream models.ChatServ
 		if err := conn.stream.Send(v); err != nil {
 			return err
 		}
-
 		if err := chatDao.DeleteChat(v); err != nil {
 			log.Fatal(err)
 		}
@@ -98,8 +98,10 @@ func (s *Server) SendChat(ctx context.Context, message *models.Message) (*models
 // Probably create a different server for user related operations
 func (s *Server) Register(ctx context.Context, user *models.User) (*models.Success, error) {
 	err := userDao.Create(user)
+
 	if err != nil {
 		return &models.Success{Value: false}, err
 	}
+
 	return &models.Success{Value: true}, nil
 }

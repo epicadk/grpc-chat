@@ -2,15 +2,15 @@ package dao
 
 import (
 	"github.com/epicadk/grpc-chat/db"
+	"github.com/epicadk/grpc-chat/mappers"
 	"github.com/epicadk/grpc-chat/models"
-	"github.com/epicadk/grpc-chat/utils"
 )
 
 type UserDao struct{}
 
 // TODO some validation
 func (ud *UserDao) Create(user *models.User) error {
-	u := utils.UserProtoToDB(user)
+	u := mappers.UserProtoToDB(user)
 	err := u.SaveToDB()
 	user.UserID = u.ID
 
