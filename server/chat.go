@@ -23,13 +23,20 @@ type Server struct {
 var chatDao dao.ChatDao
 var userDao dao.UserDao
 
-func (s *Server) Login(loginRequset *models.LoginRequest, stream models.ChatService_LoginServer) error {
+func (s *Server) Login(loginRequest *models.LoginRequest, stream models.ChatService_LoginServer) error {
+	err := userDao.CheckCredentials(loginRequest.Phonenumber, loginRequest.Password)
+
+	if err != nil {
+		return err
+	}
+
 	conn := &Connection{
 		stream: stream,
 		err:    make(chan error),
 	}
 
-	messages, err := chatDao.FindChat(loginRequset.Username)
+	// TODO use userID instead of username to find the chat
+	messages, err := chatDao.FindChat(loginRequest.Phonenumber)
 	if err != nil {
 		return err
 	}
@@ -45,8 +52,8 @@ func (s *Server) Login(loginRequset *models.LoginRequest, stream models.ChatServ
 		}
 
 	}
-
-	s.Connections[loginRequset.Username] = conn
+	// TODO use userID here
+	s.Connections[loginRequest.Phonenumber] = conn
 
 	// return is blocked till conn.err gets an error
 	return <-conn.err
@@ -88,10 +95,11 @@ func (s *Server) SendChat(ctx context.Context, message *models.Message) (*models
 	return &models.Success{}, nil
 }
 
-func (s *Server) Register(ctx context.Context, user *models.User) (*models.RegisterResponse, error) {
+// Probably create a different server for user related operations
+func (s *Server) Register(ctx context.Context, user *models.User) (*models.Success, error) {
 	err := userDao.Create(user)
 	if err != nil {
-		return nil, err
+		return &models.Success{Value: false}, err
 	}
-	return &models.RegisterResponse{UserID: user.UserID}, nil
+	return &models.Success{Value: true}, nil
 }

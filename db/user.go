@@ -1,11 +1,24 @@
 package db
 
-import "errors"
+import (
+	"github.com/epicadk/grpc-chat/utils"
+	"gorm.io/gorm"
+)
 
 type User struct {
-	Id       string `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()"`
-	Username string `gorm:"uniqueindex;unique;not null"`
-	Password string `gorm:"not null"`
+	ID          string `gorm:"default:uuid_generate_v3()"`
+	Phonenumber string `gorm:"primaryKey;index"`
+	DisplayName string `gorm:"not null"`
+	Password    string `gorm:"not null"`
+}
+
+func (user *User) BeforeCreate(tx gorm.DB) error {
+	hashedpass, err := utils.HashPassword(user.Password)
+	if err != nil {
+		return err
+	}
+	user.Password = hashedpass
+	return err
 }
 
 func (user *User) SaveToDB() error {
@@ -22,9 +35,5 @@ func (user *User) CheckPassword(password string) error {
 	if err != nil {
 		return err
 	}
-	if user.Password != password {
-		return errors.New("passwords do not match")
-	}
-	return nil
-
+	return utils.ComparePassword(user.Password, password)
 }

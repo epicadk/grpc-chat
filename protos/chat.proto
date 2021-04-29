@@ -16,23 +16,19 @@ message Success{
 }
 
 message LoginRequest{
-    string Username = 1; 
+    string phonenumber = 1; 
     string password = 2;
 }
 
-message User{ 
-    string userID = 1;
-    string displayName = 2;
-    string password = 3; 
-}
-
-message RegisterResponse { 
+message User{
     string userID = 1; 
-    bool Success = 2;
+    string phonenumber = 2;
+    string displayName = 3;
+    string password = 4; 
 }
 
 service ChatService{
     rpc Login(LoginRequest) returns (stream Message);
     rpc SendChat(Message) returns (Success);
-    rpc Register(User) returns (RegisterResponse); 
+    rpc Register(User) returns (Success); 
 }

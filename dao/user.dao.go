@@ -10,16 +10,16 @@ type UserDao struct{}
 
 // TODO some validation
 func (ud *UserDao) Create(user *models.User) error {
-	u := utils.UserProtoToDb(user)
+	u := utils.UserProtoToDB(user)
 	err := u.SaveToDB()
-	user.UserID = u.Id
+	user.UserID = u.ID
 
 	return err
 }
 
-func (ud *UserDao) FindByUsername(username string) (*db.User, error) {
+func (ud *UserDao) FindByUsername(phonenumber string) (*db.User, error) {
 	user := db.User{
-		Username: username,
+		Phonenumber: phonenumber,
 	}
 
 	err := user.FindUser()
@@ -30,9 +30,9 @@ func (ud *UserDao) FindByUsername(username string) (*db.User, error) {
 	return &user, nil
 }
 
-func (ud *UserDao) CheckCredentials(username, password string) error {
+func (ud *UserDao) CheckCredentials(phonenumber, password string) error {
 	user := db.User{
-		Username: username,
+		Phonenumber: phonenumber,
 	}
 	return user.CheckPassword(password)
 

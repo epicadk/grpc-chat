@@ -6,7 +6,7 @@ import (
 	"github.com/epicadk/grpc-chat/models"
 )
 
-func ChatDbToProto(chat *db.Chat) *models.Message {
+func ChatDBToProto(chat *db.Chat) *models.Message {
 	return &models.Message{
 		Sender:   chat.Sender,
 		Body:     chat.Body,
@@ -15,7 +15,7 @@ func ChatDbToProto(chat *db.Chat) *models.Message {
 	}
 }
 
-func ChatProtoToD(msg *models.Message) *db.Chat {
+func ChatProtoToDB(msg *models.Message) *db.Chat {
 	return &db.Chat{
 		Sender:   msg.Sender,
 		Reciever: msg.Reciever,
@@ -24,18 +24,21 @@ func ChatProtoToD(msg *models.Message) *db.Chat {
 	}
 }
 
-func UserDbToProto(u *db.User) *models.User {
+func UserDBToProto(u *db.User) *models.User {
 	return &models.User{
-		UserID:      u.Id,
-		DisplayName: u.Username,
+		UserID:      u.ID,
+		Phonenumber: u.Phonenumber,
+		DisplayName: u.DisplayName,
 		Password:    u.Password,
 	}
 }
 
 // warning does not copy userID
-func UserProtoToDb(u *models.User) *db.User {
+func UserProtoToDB(u *models.User) *db.User {
 	return &db.User{
-		Username: u.DisplayName,
-		Password: u.Password,
+		ID:          u.UserID,
+		Phonenumber: u.Phonenumber,
+		DisplayName: u.DisplayName,
+		Password:    u.Password,
 	}
 }
