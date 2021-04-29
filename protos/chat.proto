@@ -1,13 +1,13 @@
 syntax = "proto3";
 package chat; 
 
-option go_package = "models";
+option go_package = "/models";
 option java_package = "com.example.grpc-chat.models";
 
 message Message{
     string Sender = 1;
     string Body = 2;  
-    string Reciever = 3;
+    string Receiver = 3;
     int64 Sent = 4;
 }
 
@@ -16,12 +16,19 @@ message Success{
 }
 
 message LoginRequest{
-    string Username = 1; 
+    string phonenumber = 1; 
     string password = 2;
-    bool active = 3;
+}
+
+message User{
+    string userID = 1; 
+    string phonenumber = 2;
+    string displayName = 3;
+    string password = 4; 
 }
 
 service ChatService{
     rpc Login(LoginRequest) returns (stream Message);
-    rpc SendChat(Message) returns (Success); 
+    rpc SendChat(Message) returns (Success);
+    rpc Register(User) returns (Success); 
 }

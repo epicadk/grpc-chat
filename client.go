@@ -29,8 +29,18 @@ func main() {
 	defer conn.Close()
 	client = models.NewChatServiceClient(conn)
 	fmt.Scanln(&a)
-	fmt.Println(a)
-	sendMessage(&models.LoginRequest{Username: a, Password: "random", Active: true})
+	var login string
+	var password string
+	fmt.Scanln(&login)
+	fmt.Scanln(&password)
+	switch a {
+	case "r":
+		sendRegister(login, password)
+		a = "l"
+	case "l":
+		sendLogin(&models.LoginRequest{Phonenumber: login, Password: password})
+	}
+
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -39,9 +49,9 @@ func main() {
 			body := scanner.Text()
 			scanner.Scan()
 			msg := &models.Message{
-				Sender:   a,
+				Sender:   login,
 				Body:     body,
-				Reciever: scanner.Text(),
+				Receiver: scanner.Text(),
 			}
 			_, err := client.SendChat(context.Background(), msg)
 			if err != nil {
@@ -53,7 +63,7 @@ func main() {
 	wg.Wait()
 }
 
-func sendMessage(req *models.LoginRequest) error {
+func sendLogin(req *models.LoginRequest) error {
 	stream, err := client.Login(context.Background(), req)
 	if err != nil {
 		log.Fatal(err)
@@ -73,4 +83,14 @@ func sendMessage(req *models.LoginRequest) error {
 		}
 	}()
 	return err
+}
+
+func sendRegister(login, password string) {
+	_, err := client.Register(context.Background(), &models.User{
+		Phonenumber: login,
+		Password:    password,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
 }

@@ -24,7 +24,11 @@ func init() {
 	}
 
 	err = db.DBconn.AutoMigrate(&db.Chat{})
-
+	if err != nil {
+		panic("error in auto migration")
+	}
+	db.DBconn.Exec("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";")
+	err = db.DBconn.AutoMigrate(&db.User{})
 	if err != nil {
 		panic("error in auto migration")
 	}
@@ -38,7 +42,7 @@ func main() {
 			for k := range Connections {
 				log.Printf(k)
 			}
-			time.Sleep(time.Second * 5)
+			time.Sleep(time.Second * 300)
 		}
 	}()
 	grpcserver := grpc.NewServer()
@@ -49,7 +53,7 @@ func main() {
 	}
 
 	models.RegisterChatServiceServer(grpcserver, &server)
-	if err := grpcserver.Serve(lis) ; err !=nil {
+	if err := grpcserver.Serve(lis); err != nil {
 		log.Fatal(err)
 	}
 }
