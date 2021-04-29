@@ -15,7 +15,7 @@ func (cd *ChatDao) CreateChat(msg *models.Message) error {
 
 func (cd *ChatDao) FindChat(userID string) ([]*models.Message, error) {
 	chat := db.Chat{
-		Reciever: userID,
+		Receiver: userID,
 	}
 	chats, err := chat.FindChat()
 	if err != nil {

@@ -51,7 +51,7 @@ func main() {
 			msg := &models.Message{
 				Sender:   login,
 				Body:     body,
-				Reciever: scanner.Text(),
+				Receiver: scanner.Text(),
 			}
 			_, err := client.SendChat(context.Background(), msg)
 			if err != nil {

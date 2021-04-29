@@ -10,7 +10,7 @@ func ChatDBToProto(chat *db.Chat) *models.Message {
 	return &models.Message{
 		Sender:   chat.Sender,
 		Body:     chat.Body,
-		Reciever: chat.Reciever,
+		Receiver: chat.Receiver,
 		Sent:     int64(chat.Sent),
 	}
 }
@@ -18,7 +18,7 @@ func ChatDBToProto(chat *db.Chat) *models.Message {
 func ChatProtoToDB(msg *models.Message) *db.Chat {
 	return &db.Chat{
 		Sender:   msg.Sender,
-		Reciever: msg.Reciever,
+		Receiver: msg.Receiver,
 		Body:     msg.Body,
 		Sent:     uint64(msg.Sent),
 	}

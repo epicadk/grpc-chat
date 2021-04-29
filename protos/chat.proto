@@ -7,7 +7,7 @@ option java_package = "com.example.grpc-chat.models";
 message Message{
     string Sender = 1;
     string Body = 2;  
-    string Reciever = 3;
+    string Receiver = 3;
     int64 Sent = 4;
 }
 

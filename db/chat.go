@@ -4,7 +4,7 @@ type Chat struct {
 	ID       uint64
 	Sender   string `gorm:"not null"`
 	Body     string `gorm:"not null"`
-	Reciever string `gorm:"index;not null"`
+	Receiver string `gorm:"index;not null"`
 	Sent     uint64 `gorm:"autoCreateTime"`
 }
 

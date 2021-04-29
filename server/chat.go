@@ -68,7 +68,7 @@ func (s *Server) SendChat(ctx context.Context, message *models.Message) (*models
 	for k, con := range s.Connections {
 		// can add multiple Recivers
 		// if reciever is not here store in database
-		if message.Reciever == k {
+		if message.Receiver == k {
 			f = true
 			wg.Add(1)
 
