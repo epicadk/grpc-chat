@@ -47,6 +47,7 @@ func (s *Server) Login(loginRequest *models.LoginRequest, stream models.ChatServ
 		if err := conn.stream.Send(v); err != nil {
 			return err
 		}
+
 		if err := chatDao.DeleteChat(v); err != nil {
 			log.Fatal(err)
 		}

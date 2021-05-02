@@ -13,7 +13,7 @@ func (chat *Chat) SaveToDB() error {
 }
 
 func (chat *Chat) DeleteChat() error {
-	return DBconn.Delete(chat, "ID = ?", chat.ID).Error
+	return DBconn.Delete(chat, chat.ID).Error
 }
 
 func (chat *Chat) FindChat() ([]Chat, error) {

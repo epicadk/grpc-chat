@@ -8,6 +8,7 @@ import (
 
 func ChatDBToProto(chat *db.Chat) *models.Message {
 	return &models.Message{
+		Id:       chat.ID,
 		Sender:   chat.Sender,
 		Body:     chat.Body,
 		Receiver: chat.Receiver,
@@ -17,6 +18,7 @@ func ChatDBToProto(chat *db.Chat) *models.Message {
 
 func ChatProtoToDB(msg *models.Message) *db.Chat {
 	return &db.Chat{
+		ID:       msg.Id,
 		Sender:   msg.Sender,
 		Receiver: msg.Receiver,
 		Body:     msg.Body,
