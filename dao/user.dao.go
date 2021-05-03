@@ -12,7 +12,6 @@ type UserDao struct{}
 func (ud *UserDao) Create(user *models.User) error {
 	u := mappers.UserProtoToDB(user)
 	err := u.SaveToDB()
-	user.UserID = u.ID
 
 	return err
 }

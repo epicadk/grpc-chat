@@ -13,7 +13,6 @@ var DBconn *gorm.DB
 
 func init() {
 	var err error
-	// TODO use env vars
 	host, check := os.LookupEnv("DB_HOST")
 	if !check {
 		host = "db"

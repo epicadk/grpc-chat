@@ -53,7 +53,6 @@ func (s *Server) Login(loginRequest *models.LoginRequest, stream models.ChatServ
 		}
 
 	}
-	// TODO use userID here
 	s.Connections[loginRequest.Phonenumber] = conn
 
 	// return is blocked till conn.err gets an error
@@ -62,14 +61,13 @@ func (s *Server) Login(loginRequest *models.LoginRequest, stream models.ChatServ
 
 func (s *Server) SendChat(ctx context.Context, message *models.Message) (*models.Success, error) {
 	log.Println(message)
-
 	wg := sync.WaitGroup{}
 	var f bool
 
 	for k, con := range s.Connections {
 		// can add multiple Recivers
-		// if reciever is not here store in database
-		if message.Receiver == k {
+		// if receiver is not here store in database
+		if message.To == k {
 			f = true
 			wg.Add(1)
 

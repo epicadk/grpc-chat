@@ -6,8 +6,8 @@ import (
 )
 
 type User struct {
-	ID          string `gorm:"default:uuid_generate_v4()"`
-	Phonenumber string `gorm:"primaryKey;index"`
+	// Primary key is indexed by default
+	Phonenumber string `gorm:"primaryKey"`
 	DisplayName string `gorm:"not null"`
 	Password    string `gorm:"not null"`
 }

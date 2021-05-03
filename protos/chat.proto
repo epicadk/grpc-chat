@@ -2,14 +2,14 @@ syntax = "proto3";
 package chat; 
 
 option go_package = "/models";
-option java_package = "com.example.grpc-chat.models";
+option java_package = "com.example.grpc_chat_android.models";
 
 message Message{
     uint64 id = 1;
-    string Sender = 2;
+    string From = 2;
     string Body = 3;  
-    string Receiver = 4;
-    int64 Sent = 5;
+    string To = 4;
+    uint64 Time = 5;
 }
 
 message Success{
@@ -21,11 +21,10 @@ message LoginRequest{
     string password = 2;
 }
 
-message User{
-    string userID = 1; 
-    string phonenumber = 2;
-    string displayName = 3;
-    string password = 4; 
+message User{ 
+    string phonenumber = 1;
+    string displayName = 2;
+    string password = 3; 
 }
 
 service ChatService{
