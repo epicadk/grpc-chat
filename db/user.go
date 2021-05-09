@@ -6,10 +6,9 @@ import (
 )
 
 type User struct {
-	// Primary key is indexed by default
-	Phonenumber string `gorm:"primaryKey"`
-	DisplayName string `gorm:"not null"`
-	Password    string `gorm:"not null"`
+	Phonenumber string `gorm:"primaryKey"` // Primary key is indexed by default
+	DisplayName string `gorm:"not null"`   // Display name of the user
+	Password    string `gorm:"not null"`   // Hashed password of the user
 }
 
 // GORM hook, validate data here.
@@ -32,7 +31,6 @@ func (user *User) FindUser() error {
 
 func (user *User) CheckPassword(password string) error {
 	err := DBconn.Where(user).First(user).Error
-	// TODO user hash
 	if err != nil {
 		return err
 	}

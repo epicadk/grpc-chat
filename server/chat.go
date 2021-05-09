@@ -11,21 +11,21 @@ import (
 
 //Connection Represents a connection to the server.
 type Connection struct {
-	stream models.ChatService_LoginServer
-	err    chan error
+	stream models.ChatService_LoginServer // the stream of the user
+	err    chan error                     // the channel for the error
 }
 
 type Server struct {
-	// Map of active connections
-	Connections map[string]*Connection
+	Connections map[string]*Connection // Map of active connections
 }
 
-var chatDao dao.ChatDao
-var userDao dao.UserDao
+var (
+	chatDao dao.ChatDao
+	userDao dao.UserDao
+)
 
 func (s *Server) Login(loginRequest *models.LoginRequest, stream models.ChatService_LoginServer) error {
 	err := userDao.CheckCredentials(loginRequest.Phonenumber, loginRequest.Password)
-	log.Println(loginRequest.Phonenumber)
 
 	if err != nil {
 		return err
@@ -36,24 +36,26 @@ func (s *Server) Login(loginRequest *models.LoginRequest, stream models.ChatServ
 		err:    make(chan error),
 	}
 
-	// TODO use userID instead of username to find the chat
 	messages, err := chatDao.FindChat(loginRequest.Phonenumber)
 	if err != nil {
 		return err
 	}
 
-	for _, v := range messages {
-
-		if err := conn.stream.Send(v); err != nil {
-			return err
-		}
-
-		if err := chatDao.DeleteChat(v); err != nil {
-			log.Fatal(err)
-		}
-
-	}
 	s.Connections[loginRequest.Phonenumber] = conn
+
+	for _, v := range messages {
+		go func(message *models.Message) {
+			if err := conn.stream.Send(message); err != nil {
+				conn.err <- err
+			}
+
+			// Delete only after message has been sent
+			if err := chatDao.DeleteChat(message); err != nil {
+				log.Fatal(err)
+			}
+
+		}(v)
+	}
 
 	// return is blocked till conn.err gets an error
 	return <-conn.err
