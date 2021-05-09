@@ -1,6 +1,3 @@
-/*
-packa
-*/
 package mappers
 
 import (
@@ -12,9 +9,9 @@ import (
 func ChatDBToProto(chat *db.Chat) *models.Message {
 	return &models.Message{
 		Id:   chat.ID,
-		From: chat.From.Phonenumber,
+		From: chat.From,
 		Body: chat.Body,
-		To:   chat.To.Phonenumber,
+		To:   chat.To,
 		Time: chat.Time,
 	}
 }
@@ -23,8 +20,8 @@ func ChatDBToProto(chat *db.Chat) *models.Message {
 func ChatProtoToDB(msg *models.Message) *db.Chat {
 	return &db.Chat{
 		ID:   msg.Id,
-		From: db.User{Phonenumber: msg.From},
-		To:   db.User{Phonenumber: msg.To},
+		From: msg.From,
+		To:   msg.To,
 		Body: msg.Body,
 		Time: msg.Time,
 	}

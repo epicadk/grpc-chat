@@ -29,10 +29,12 @@ func (ud *UserDao) FindByUsername(phonenumber string) (*db.User, error) {
 	return &user, nil
 }
 
-func (ud *UserDao) CheckCredentials(phonenumber, password string) error {
+func (ud *UserDao) CheckCredentials(phonenumber, password string) (*db.User, error) {
 	user := db.User{
 		Phonenumber: phonenumber,
 	}
-	return user.CheckPassword(password)
-
+	if err := user.CheckPassword(password); err != nil {
+		return nil, err
+	}
+	return &user, nil
 }

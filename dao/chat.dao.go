@@ -13,9 +13,9 @@ func (cd *ChatDao) CreateChat(msg *models.Message) error {
 	return mappers.ChatProtoToDB(msg).SaveToDB()
 }
 
-func (cd *ChatDao) FindChat(userID string) ([]*models.Message, error) {
+func (cd *ChatDao) FindChat(phonenumber string) ([]*models.Message, error) {
 	chat := db.Chat{
-		To: userID,
+		To: phonenumber,
 	}
 	chats, err := chat.FindChat()
 	if err != nil {

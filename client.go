@@ -36,7 +36,6 @@ func main() {
 	switch a {
 	case "r":
 		sendRegister(login, password)
-		a = "l"
 	case "l":
 		sendLogin(&models.LoginRequest{Phonenumber: login, Password: password})
 	}
@@ -49,9 +48,9 @@ func main() {
 			body := scanner.Text()
 			scanner.Scan()
 			msg := &models.Message{
-				Sender:   login,
-				Body:     body,
-				Receiver: scanner.Text(),
+				From: login,
+				Body: body,
+				To:   scanner.Text(),
 			}
 			_, err := client.SendChat(context.Background(), msg)
 			if err != nil {

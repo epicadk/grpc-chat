@@ -25,7 +25,7 @@ var (
 )
 
 func (s *Server) Login(loginRequest *models.LoginRequest, stream models.ChatService_LoginServer) error {
-	err := userDao.CheckCredentials(loginRequest.Phonenumber, loginRequest.Password)
+	user, err := userDao.CheckCredentials(loginRequest.Phonenumber, loginRequest.Password)
 
 	if err != nil {
 		return err
@@ -36,7 +36,7 @@ func (s *Server) Login(loginRequest *models.LoginRequest, stream models.ChatServ
 		err:    make(chan error),
 	}
 
-	messages, err := chatDao.FindChat(loginRequest.Phonenumber)
+	messages, err := chatDao.FindChat(user.Phonenumber)
 	if err != nil {
 		return err
 	}
