@@ -9,7 +9,7 @@ import (
 	"github.com/epicadk/grpc-chat/models"
 )
 
-//Connection Represents a connection to the server.
+// Connection Represents a connection to the server.
 type Connection struct {
 	stream models.ChatService_LoginServer // the stream of the user
 	err    chan error                     // the channel for the error
@@ -64,29 +64,23 @@ func (s *Server) Login(loginRequest *models.LoginRequest, stream models.ChatServ
 func (s *Server) SendChat(ctx context.Context, message *models.Message) (*models.Success, error) {
 	log.Println(message)
 	wg := sync.WaitGroup{}
-	var f bool
+	to, ok := s.Connections[message.To]
+	// can add multiple Recivers
+	// if receiver is not here store in database
+	if ok {
+		wg.Add(1)
 
-	for k, con := range s.Connections {
-		// can add multiple Recivers
-		// if receiver is not here store in database
-		if message.To == k {
-			f = true
-			wg.Add(1)
+		go func(msg *models.Message, conn *Connection, wg *sync.WaitGroup) {
+			defer wg.Done()
 
-			go func(msg *models.Message, conn *Connection, wg *sync.WaitGroup) {
-				defer wg.Done()
-
-				if err := conn.stream.Send(msg); err != nil {
-					conn.err <- err
-					delete(s.Connections, k)
-					f = false
-				}
-			}(message, con, &wg)
-		}
+			if err := conn.stream.Send(msg); err != nil {
+				conn.err <- err
+				delete(s.Connections, message.To)
+			}
+		}(message, to, &wg)
 	}
-
 	wg.Wait()
-	if !f {
+	if !ok {
 		err := chatDao.CreateChat(message)
 		if err != nil {
 			log.Fatal(err)
