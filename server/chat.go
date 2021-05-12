@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"sync"
+	"time"
 
 	"github.com/epicadk/grpc-chat/dao"
 	"github.com/epicadk/grpc-chat/models"
@@ -65,6 +66,9 @@ func (s *Server) SendChat(ctx context.Context, message *models.Message) (*models
 	log.Println(message)
 	wg := sync.WaitGroup{}
 	to, ok := s.Connections[message.To]
+
+	timeMilli := time.Now().UnixNano() / 1e6
+	message.Time = uint64(timeMilli)
 	// can add multiple Recivers
 	// if receiver is not here store in database
 	if ok {
