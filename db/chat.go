@@ -5,7 +5,7 @@ type Chat struct {
 	From string `gorm:"not null;"`      // Sender of the chat
 	Body string `gorm:"not null;"`      // Body of the chat
 	To   string `gorm:"not null;index"` // Reciever of the chat
-	Time uint64 `gorm:"autoCreateTime"` // Time at which server recieved the chat
+	Time uint64 `gorm:"not null"`       // Time at which server recieved the chat
 }
 
 func (chat *Chat) SaveToDB() error {
