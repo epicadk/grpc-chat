@@ -21,6 +21,10 @@ message LoginRequest{
     string password = 2;
 }
 
+message Phone{
+    string phonenumber = 1;
+}
+
 message User{ 
     string phonenumber = 1;
     string displayName = 2;
@@ -28,7 +32,8 @@ message User{
 }
 
 service ChatService{
-    rpc Login(LoginRequest) returns (stream Message);
+    rpc Login(LoginRequest) returns (Success);
+    rpc Connect(Phone) returns (stream Message);
     rpc SendChat(Message) returns (Success);
     rpc Register(User) returns (Success); 
 }

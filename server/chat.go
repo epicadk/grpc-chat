@@ -12,12 +12,13 @@ import (
 
 // Connection Represents a connection to the server.
 type Connection struct {
-	stream models.ChatService_LoginServer // the stream of the user
-	err    chan error                     // the channel for the error
+	stream models.ChatService_ConnectServer // the stream of the user
+	err    chan error                       // the channel for the error
 }
 
 type Server struct {
 	Connections map[string]*Connection // Map of active connections
+	models.UnimplementedChatServiceServer
 }
 
 var (
@@ -25,24 +26,28 @@ var (
 	userDao dao.UserDao
 )
 
-func (s *Server) Login(loginRequest *models.LoginRequest, stream models.ChatService_LoginServer) error {
-	user, err := userDao.CheckCredentials(loginRequest.Phonenumber, loginRequest.Password)
+func (s *Server) Login(ctx context.Context, loginRequest *models.LoginRequest) (*models.Success, error) {
+	_, err := userDao.CheckCredentials(loginRequest.Phonenumber, loginRequest.Password)
 
 	if err != nil {
-		return err
+		return &models.Success{Value: false}, err
 	}
 
+	return &models.Success{Value: true}, nil
+}
+
+func (s *Server) Connect(phone *models.Phone, stream models.ChatService_ConnectServer) error {
 	conn := &Connection{
 		stream: stream,
 		err:    make(chan error),
 	}
 
-	messages, err := chatDao.FindChat(user.Phonenumber)
+	messages, err := chatDao.FindChat(phone.Phonenumber)
 	if err != nil {
 		return err
 	}
 
-	s.Connections[loginRequest.Phonenumber] = conn
+	s.Connections[phone.Phonenumber] = conn
 
 	for _, v := range messages {
 		go func(message *models.Message) {
