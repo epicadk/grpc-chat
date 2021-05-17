@@ -37,7 +37,10 @@ func main() {
 	case "r":
 		sendRegister(login, password)
 	case "l":
-		sendLogin(&models.LoginRequest{Phonenumber: login, Password: password})
+		success, _ := sendLogin(&models.LoginRequest{Phonenumber: login, Password: password})
+		if success.Value == true {
+			makeConnection(&models.Phone{Phonenumber: login})
+		}
 	}
 
 	wg.Add(1)
@@ -62,8 +65,17 @@ func main() {
 	wg.Wait()
 }
 
-func sendLogin(req *models.LoginRequest) error {
-	stream, err := client.Login(context.Background(), req)
+func sendLogin(req *models.LoginRequest) (*models.Success, error) {
+	success, err := client.Login(context.Background(), req)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return success, err
+}
+
+func makeConnection(phone *models.Phone) error {
+	stream, err := client.Connect(context.Background(), phone)
 	if err != nil {
 		log.Fatal(err)
 	}
