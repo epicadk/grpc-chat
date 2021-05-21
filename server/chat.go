@@ -30,10 +30,10 @@ var (
 	userDao dao.UserDao
 )
 
-func (s *Server) Login(ctx context.Context, loginRequest *models.LoginRequest) (*models.LoginResponse, error) {
-	user, err := userDao.CheckCredentials(loginRequest.Phonenumber, loginRequest.Password)
+func (s *Server) Login(ctx context.Context, loginRequest *models.LoginRequest) (res *models.LoginResponse, err1 error) {
+	res = &models.LoginResponse{}
 
-	res := &models.LoginResponse{}
+	user, err := userDao.CheckCredentials(loginRequest.Phonenumber, loginRequest.Password)
 	if err != nil {
 		res.Status = &models.Success{Value: false}
 		return res, status.Errorf(codes.Internal, "cannot find user: %v", err)
@@ -50,6 +50,7 @@ func (s *Server) Login(ctx context.Context, loginRequest *models.LoginRequest) (
 		return res, status.Errorf(codes.Internal, "cannot generate access token")
 	}
 
+	res.Status = &models.Success{Value: true}
 	res.AccessToken = token
 	return res, nil
 }
