@@ -18,7 +18,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ChatServiceClient interface {
-	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*Success, error)
+	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
 	Connect(ctx context.Context, in *Phone, opts ...grpc.CallOption) (ChatService_ConnectClient, error)
 	SendChat(ctx context.Context, in *Message, opts ...grpc.CallOption) (*Success, error)
 	Register(ctx context.Context, in *User, opts ...grpc.CallOption) (*Success, error)
@@ -32,8 +32,8 @@ func NewChatServiceClient(cc grpc.ClientConnInterface) ChatServiceClient {
 	return &chatServiceClient{cc}
 }
 
-func (c *chatServiceClient) Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*Success, error) {
-	out := new(Success)
+func (c *chatServiceClient) Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error) {
+	out := new(LoginResponse)
 	err := c.cc.Invoke(ctx, "/chat.ChatService/Login", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -95,7 +95,7 @@ func (c *chatServiceClient) Register(ctx context.Context, in *User, opts ...grpc
 // All implementations must embed UnimplementedChatServiceServer
 // for forward compatibility
 type ChatServiceServer interface {
-	Login(context.Context, *LoginRequest) (*Success, error)
+	Login(context.Context, *LoginRequest) (*LoginResponse, error)
 	Connect(*Phone, ChatService_ConnectServer) error
 	SendChat(context.Context, *Message) (*Success, error)
 	Register(context.Context, *User) (*Success, error)
@@ -106,7 +106,7 @@ type ChatServiceServer interface {
 type UnimplementedChatServiceServer struct {
 }
 
-func (UnimplementedChatServiceServer) Login(context.Context, *LoginRequest) (*Success, error) {
+func (UnimplementedChatServiceServer) Login(context.Context, *LoginRequest) (*LoginResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Login not implemented")
 }
 func (UnimplementedChatServiceServer) Connect(*Phone, ChatService_ConnectServer) error {

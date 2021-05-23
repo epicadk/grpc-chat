@@ -2,9 +2,11 @@ package db
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"time"
 
+	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -12,6 +14,10 @@ import (
 var DBconn *gorm.DB
 
 func init() {
+	err1 := godotenv.Load("config.env")
+	if err1 != nil {
+		log.Fatalf("db: error loading .env file: %v", err1)
+	}
 	var err error
 	host, check := os.LookupEnv("DB_HOST")
 	if !check {

@@ -11,7 +11,13 @@ import (
 
 	"github.com/epicadk/grpc-chat/models"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 )
+
+type ClientInterceptor struct {
+	authMethods map[string]bool
+	accessToken string
+}
 
 var client models.ChatServiceClient
 var wg *sync.WaitGroup
@@ -22,7 +28,11 @@ func init() {
 }
 
 func main() {
-	conn, err := grpc.Dial(":8080", grpc.WithInsecure())
+	interceptor, err := NewInterceptor(authMethods())
+	if err != nil {
+		log.Fatal("cannot create client interceptor: ", err)
+	}
+	conn, err := grpc.Dial(":8080", grpc.WithInsecure(), grpc.WithUnaryInterceptor(interceptor.Unary()), grpc.WithStreamInterceptor(interceptor.Stream()))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -37,10 +47,11 @@ func main() {
 	case "r":
 		sendRegister(login, password)
 	case "l":
-		success, _ := sendLogin(&models.LoginRequest{Phonenumber: login, Password: password})
-		if success.Value == true {
-			makeConnection(&models.Phone{Phonenumber: login})
+		err := sendLogin(&models.LoginRequest{Phonenumber: login, Password: password}, interceptor)
+		if err != nil {
+			log.Fatal(err)
 		}
+		makeConnection(&models.Phone{Phonenumber: login})
 	}
 
 	wg.Add(1)
@@ -65,13 +76,61 @@ func main() {
 	wg.Wait()
 }
 
-func sendLogin(req *models.LoginRequest) (*models.Success, error) {
-	success, err := client.Login(context.Background(), req)
-	if err != nil {
-		log.Fatal(err)
+func NewInterceptor(authMethods map[string]bool) (*ClientInterceptor, error) {
+	interceptor := &ClientInterceptor{
+		authMethods: authMethods,
 	}
 
-	return success, err
+	return interceptor, nil
+}
+
+func (interceptor *ClientInterceptor) Unary() grpc.UnaryClientInterceptor {
+	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+		log.Printf("--> unary interceptor: %s", method)
+
+		if interceptor.authMethods[method] {
+			return invoker(interceptor.attachToken(ctx), method, req, reply, cc, opts...)
+		}
+
+		return invoker(ctx, method, req, reply, cc, opts...)
+	}
+}
+
+func (interceptor *ClientInterceptor) Stream() grpc.StreamClientInterceptor {
+	return func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
+		log.Printf("--> stream interceptor: %s", method)
+
+		if interceptor.authMethods[method] {
+			return streamer(interceptor.attachToken(ctx), desc, cc, method, opts...)
+		}
+
+		return streamer(ctx, desc, cc, method, opts...)
+	}
+}
+
+func (interceptor *ClientInterceptor) attachToken(ctx context.Context) context.Context {
+	return metadata.AppendToOutgoingContext(ctx, "authorization", interceptor.accessToken)
+}
+
+func authMethods() map[string]bool {
+	const servicePath = "/chat.ChatService/"
+
+	return map[string]bool{
+		servicePath + "Login":    false,
+		servicePath + "Register": false,
+		servicePath + "Connect":  true,
+		servicePath + "SendChat": true,
+	}
+}
+
+func sendLogin(req *models.LoginRequest, interceptor *ClientInterceptor) error {
+	res, err := client.Login(context.Background(), req)
+	if err != nil {
+		return err
+	}
+
+	interceptor.accessToken = res.AccessToken
+	return nil
 }
 
 func makeConnection(phone *models.Phone) error {

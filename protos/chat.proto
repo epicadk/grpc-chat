@@ -21,6 +21,11 @@ message LoginRequest{
     string password = 2;
 }
 
+message LoginResponse{
+    string access_token = 1;
+    Success status = 2;
+}
+
 message Phone{
     string phonenumber = 1;
 }
@@ -32,7 +37,7 @@ message User{
 }
 
 service ChatService{
-    rpc Login(LoginRequest) returns (Success);
+    rpc Login(LoginRequest) returns (LoginResponse);
     rpc Connect(Phone) returns (stream Message);
     rpc SendChat(Message) returns (Success);
     rpc Register(User) returns (Success); 

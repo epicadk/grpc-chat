@@ -8,6 +8,9 @@ import (
 
 	"github.com/epicadk/grpc-chat/dao"
 	"github.com/epicadk/grpc-chat/models"
+	"github.com/epicadk/grpc-chat/utils"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // Connection Represents a connection to the server.
@@ -18,6 +21,7 @@ type Connection struct {
 
 type Server struct {
 	Connections map[string]*Connection // Map of active connections
+	JwtManager  *utils.JWTManager      // JWT Manager
 	models.UnimplementedChatServiceServer
 }
 
@@ -26,14 +30,29 @@ var (
 	userDao dao.UserDao
 )
 
-func (s *Server) Login(ctx context.Context, loginRequest *models.LoginRequest) (*models.Success, error) {
-	_, err := userDao.CheckCredentials(loginRequest.Phonenumber, loginRequest.Password)
+func (s *Server) Login(ctx context.Context, loginRequest *models.LoginRequest) (res *models.LoginResponse, err1 error) {
+	res = &models.LoginResponse{}
 
+	user, err := userDao.CheckCredentials(loginRequest.Phonenumber, loginRequest.Password)
 	if err != nil {
-		return &models.Success{Value: false}, err
+		res.Status = &models.Success{Value: false}
+		return res, status.Errorf(codes.Internal, "cannot find user: %v", err)
 	}
 
-	return &models.Success{Value: true}, nil
+	if user == nil || utils.ComparePassword(user.Password, loginRequest.Password) != nil {
+		res.Status = &models.Success{Value: false}
+		return res, status.Errorf(codes.NotFound, "incorrect username/password")
+	}
+
+	token, err := s.JwtManager.Generate(user.Phonenumber)
+	if err != nil {
+		res.Status = &models.Success{Value: false}
+		return res, status.Errorf(codes.Internal, "cannot generate access token")
+	}
+
+	res.Status = &models.Success{Value: true}
+	res.AccessToken = token
+	return res, nil
 }
 
 func (s *Server) Connect(phone *models.Phone, stream models.ChatService_ConnectServer) error {
