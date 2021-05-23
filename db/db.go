@@ -13,12 +13,11 @@ import (
 
 var DBconn *gorm.DB
 
-func init() {
-	err1 := godotenv.Load("config.env")
-	if err1 != nil {
-		log.Fatalf("db: error loading .env file: %v", err1)
+func SetupDB() {
+	err := godotenv.Load("config.env")
+	if err != nil {
+		log.Fatalf("db: error loading .env file: %v", err)
 	}
-	var err error
 	host, check := os.LookupEnv("DB_HOST")
 	if !check {
 		host = "db"
@@ -63,7 +62,6 @@ func init() {
 	if err != nil {
 		panic("error in auto migration")
 	}
-	DBconn.Exec("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";")
 
 	err = DBconn.AutoMigrate(&User{})
 	if err != nil {

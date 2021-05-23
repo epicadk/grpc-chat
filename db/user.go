@@ -1,6 +1,8 @@
 package db
 
 import (
+	"log"
+
 	"github.com/epicadk/grpc-chat/utils"
 	"gorm.io/gorm"
 )
@@ -15,7 +17,7 @@ type User struct {
 func (user *User) BeforeCreate(tx *gorm.DB) error {
 	hashedpass, err := utils.HashPassword(user.Password)
 	if err != nil {
-		return err
+		log.Fatal(err)
 	}
 	user.Password = hashedpass
 	return err

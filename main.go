@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/epicadk/grpc-chat/db"
 	"github.com/epicadk/grpc-chat/models"
 	"github.com/epicadk/grpc-chat/server"
 	"github.com/epicadk/grpc-chat/utils"
@@ -18,6 +19,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("main: error loading .env file: %v", err)
 	}
+
+	db.SetupDB()
 
 	Connections := make(map[string]*server.Connection)
 	secret, check := os.LookupEnv("SECRET_KEY")

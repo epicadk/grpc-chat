@@ -8,7 +8,6 @@ import (
 
 type UserDao struct{}
 
-// TODO some validation
 func (ud *UserDao) Create(user *models.User) error {
 	u := mappers.UserProtoToDB(user)
 	err := u.SaveToDB()

@@ -29,20 +29,26 @@ func init() {
 
 func main() {
 	interceptor, err := NewInterceptor(authMethods())
+
 	if err != nil {
 		log.Fatal("cannot create client interceptor: ", err)
 	}
+
 	conn, err := grpc.Dial(":8080", grpc.WithInsecure(), grpc.WithUnaryInterceptor(interceptor.Unary()), grpc.WithStreamInterceptor(interceptor.Stream()))
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("cannot create GPRC client", err)
 	}
+
 	defer conn.Close()
 	client = models.NewChatServiceClient(conn)
+
 	fmt.Scanln(&a)
+
 	var login string
 	var password string
 	fmt.Scanln(&login)
 	fmt.Scanln(&password)
+
 	switch a {
 	case "r":
 		sendRegister(login, password)
