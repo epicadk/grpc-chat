@@ -81,6 +81,7 @@ func (interceptor *Interceptor) authorize(ctx context.Context, rpcMethod string)
 	if err != nil {
 		return status.Errorf(codes.Unauthenticated, "access token is invalid")
 	}
-	md.Append("user", claims.Id)
+	md.Append("user", claims.PhoneNumber)
+	log.Println(claims)
 	return nil
 }
