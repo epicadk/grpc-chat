@@ -23,9 +23,9 @@ func NewJWTManager(secretKey string, tokenDuration time.Duration) *JWTManager {
 
 func (manager *JWTManager) Generate(phone string) (string, error) {
 	claims := UserClaims{
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(manager.tokenDuration).Unix(),
-		},
+		// StandardClaims: jwt.StandardClaims{
+		// 	ExpiresAt: time.Now().Add(manager.tokenDuration).Unix(),
+		// },
 		PhoneNumber: phone,
 	}
 
@@ -48,8 +48,8 @@ func (manager *JWTManager) Verify(accessToken string) (*UserClaims, error) {
 	}
 
 	claims, ok := token.Claims.(*UserClaims)
-	if !ok {
-		return nil, fmt.Errorf("invalid token claims")
+	if !ok && !token.Valid {
+		return nil, fmt.Errorf("invalid/expired token claims")
 	}
 
 	return claims, nil
