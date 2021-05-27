@@ -2,12 +2,10 @@ package main
 
 // Simple client in go
 import (
-	"bufio"
 	"context"
 	"fmt"
+	"io"
 	"log"
-	"os"
-	"sync"
 
 	"github.com/epicadk/grpc-chat/models"
 	"google.golang.org/grpc"
@@ -20,12 +18,7 @@ type ClientInterceptor struct {
 }
 
 var client models.ChatServiceClient
-var wg *sync.WaitGroup
 var a string
-
-func init() {
-	wg = &sync.WaitGroup{}
-}
 
 func main() {
 	interceptor, err := NewInterceptor(authMethods())
@@ -57,29 +50,44 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		makeConnection(&models.Phone{Phonenumber: login})
 	}
-
-	wg.Add(1)
+	cStream, err := client.Connect(context.Background())
+	if err != nil {
+		log.Fatal(err)
+	}
+	waitc := make(chan struct{})
+	// Get message from server
 	go func() {
-		defer wg.Done()
-		scanner := bufio.NewScanner(os.Stdin)
-		for scanner.Scan() {
-			body := scanner.Text()
-			scanner.Scan()
+		for {
+			msg, err := cStream.Recv()
+			if err == io.EOF {
+				close(waitc)
+				return
+			}
+			if err != nil {
+				log.Fatalf("Failed to receive a note : %v", err)
+			}
+			log.Println(msg)
+		}
+	}()
+	go func() {
+		for {
+			var body string
+			var To string
+			fmt.Scanln(&body)
+			fmt.Scanln(&To)
 			msg := &models.Message{
 				From: login,
 				Body: body,
-				To:   scanner.Text(),
+				To:   To,
 			}
-			_, err := client.SendChat(context.Background(), msg)
-			if err != nil {
-				log.Fatal(err)
-				break
+			if err := cStream.Send(msg); err != nil {
+				log.Fatalf("Failed to send a note: %v", err)
 			}
 		}
 	}()
-	wg.Wait()
+	<-waitc
+
 }
 
 func NewInterceptor(authMethods map[string]bool) (*ClientInterceptor, error) {
@@ -137,28 +145,6 @@ func sendLogin(req *models.LoginRequest, interceptor *ClientInterceptor) error {
 
 	interceptor.accessToken = res.AccessToken
 	return nil
-}
-
-func makeConnection(phone *models.Phone) error {
-	stream, err := client.Connect(context.Background(), phone)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-
-		for {
-			msg, err := stream.Recv()
-			if err != nil {
-				log.Fatal(err)
-				break
-			}
-			log.Println(msg)
-		}
-	}()
-	return err
 }
 
 func sendRegister(login, password string) {

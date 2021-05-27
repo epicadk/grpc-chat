@@ -77,10 +77,11 @@ func (interceptor *Interceptor) authorize(ctx context.Context, rpcMethod string)
 	}
 
 	accessToken := values[0]
-	_, err := interceptor.jwtManager.Verify(accessToken)
+	claims, err := interceptor.jwtManager.Verify(accessToken)
 	if err != nil {
 		return status.Errorf(codes.Unauthenticated, "access token is invalid")
 	}
-
+	md.Append("user", claims.PhoneNumber)
+	log.Println(claims)
 	return nil
 }

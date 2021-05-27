@@ -38,7 +38,6 @@ message User{
 
 service ChatService{
     rpc Login(LoginRequest) returns (LoginResponse);
-    rpc Connect(Phone) returns (stream Message);
-    rpc SendChat(Message) returns (Success);
+    rpc Connect(stream Message) returns (stream Message);
     rpc Register(User) returns (Success); 
 }

@@ -2,6 +2,8 @@ package server
 
 import (
 	"context"
+	"errors"
+	"io"
 	"log"
 	"sync"
 	"time"
@@ -10,6 +12,7 @@ import (
 	"github.com/epicadk/grpc-chat/models"
 	"github.com/epicadk/grpc-chat/utils"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
 
@@ -55,23 +58,27 @@ func (s *Server) Login(ctx context.Context, loginRequest *models.LoginRequest) (
 	return res, nil
 }
 
-func (s *Server) Connect(phone *models.Phone, stream models.ChatService_ConnectServer) error {
-	conn := &Connection{
+func (s *Server) Connect(stream models.ChatService_ConnectServer) error {
+	userConnection := &Connection{
 		stream: stream,
 		err:    make(chan error),
 	}
-
-	messages, err := chatDao.FindChat(phone.Phonenumber)
+	md, ok := metadata.FromIncomingContext(stream.Context())
+	// should not happen because interceptor
+	if !ok {
+		return errors.New("no metadata")
+	}
+	user := md.Get("user")[0]
+	messages, err := chatDao.FindChat(user)
 	if err != nil {
 		return err
 	}
-
-	s.Connections[phone.Phonenumber] = conn
-
+	s.Connections[user] = userConnection
+	log.Println(len(s.Connections), user)
 	for _, v := range messages {
 		go func(message *models.Message) {
-			if err := conn.stream.Send(message); err != nil {
-				conn.err <- err
+			if err := userConnection.stream.Send(message); err != nil {
+				userConnection.err <- err
 			}
 
 			// Delete only after message has been sent
@@ -81,41 +88,43 @@ func (s *Server) Connect(phone *models.Phone, stream models.ChatService_ConnectS
 
 		}(v)
 	}
+	go func() {
+		for {
+			msg, err := stream.Recv()
+			if err == io.EOF {
+				return
+			}
+			if err != nil {
+				userConnection.err <- err
+				return
+			}
+			wg := sync.WaitGroup{}
+			timeMilli := time.Now().UnixNano() / 1e6
+			msg.Time = uint64(timeMilli)
+			log.Println(msg)
+			to, ok := s.Connections[msg.To]
+			if ok {
+				wg.Add(1)
+				go func(msg *models.Message, conn *Connection, wg *sync.WaitGroup) {
+					defer wg.Done()
+					if err := conn.stream.Send(msg); err != nil {
+						conn.err <- err
+						delete(s.Connections, msg.To)
+					}
+				}(msg, to, &wg)
+			}
+			wg.Wait()
+			if !ok {
+				err := chatDao.CreateChat(msg)
+				if err != nil {
+					log.Fatal(err)
+				}
+			}
+		}
+	}()
 
 	// return is blocked till conn.err gets an error
-	return <-conn.err
-}
-
-func (s *Server) SendChat(ctx context.Context, message *models.Message) (*models.Success, error) {
-	log.Println(message)
-	wg := sync.WaitGroup{}
-	to, ok := s.Connections[message.To]
-
-	timeMilli := time.Now().UnixNano() / 1e6
-	message.Time = uint64(timeMilli)
-	// can add multiple Recivers
-	// if receiver is not here store in database
-	if ok {
-		wg.Add(1)
-
-		go func(msg *models.Message, conn *Connection, wg *sync.WaitGroup) {
-			defer wg.Done()
-
-			if err := conn.stream.Send(msg); err != nil {
-				conn.err <- err
-				delete(s.Connections, message.To)
-			}
-		}(message, to, &wg)
-	}
-	wg.Wait()
-	if !ok {
-		err := chatDao.CreateChat(message)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-
-	return &models.Success{}, nil
+	return <-userConnection.err
 }
 
 // Probably create a different server for user related operations
