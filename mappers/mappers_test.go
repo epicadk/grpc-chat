@@ -1,17 +1,23 @@
 package mappers_test
 
 import (
+	"log"
 	"testing"
 
 	"github.com/epicadk/grpc-chat/db"
 	"github.com/epicadk/grpc-chat/mappers"
 	"github.com/epicadk/grpc-chat/models"
+	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestChatMappperDBtoProto(t *testing.T) {
+	uuid, err := uuid.DefaultGenerator.NewV4()
+	if err != nil {
+		log.Fatal("Error Generating UUID", err)
+	}
 	testChat := db.Chat{
-		ID:   99090,
+		ID:   uuid.String(),
 		From: "from",
 		Body: "Body",
 		To:   "To",
@@ -19,7 +25,7 @@ func TestChatMappperDBtoProto(t *testing.T) {
 	}
 	result := mappers.ChatDBToProto(&testChat)
 	expected := models.Message{
-		Id:   99090,
+		Id:   "",
 		From: "from",
 		Body: "Body",
 		To:   "To",
@@ -29,8 +35,12 @@ func TestChatMappperDBtoProto(t *testing.T) {
 }
 
 func TestChatMappperPrototoDB(t *testing.T) {
+	uuid, err := uuid.DefaultGenerator.NewV4()
+	if err != nil {
+		log.Fatal("Error Generating UUID", err)
+	}
 	testChat := models.Message{
-		Id:   99090,
+		Id:   uuid.String(),
 		From: "from",
 		Body: "Body",
 		To:   "To",
@@ -38,7 +48,7 @@ func TestChatMappperPrototoDB(t *testing.T) {
 	}
 	result := mappers.ChatProtoToDB(&testChat)
 	expected := db.Chat{
-		ID:   99090,
+		ID:   uuid.String(),
 		From: "from",
 		Body: "Body",
 		To:   "To",

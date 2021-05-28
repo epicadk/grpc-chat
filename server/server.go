@@ -11,6 +11,7 @@ import (
 	"github.com/epicadk/grpc-chat/dao"
 	"github.com/epicadk/grpc-chat/models"
 	"github.com/epicadk/grpc-chat/utils"
+	"github.com/gofrs/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
@@ -101,6 +102,8 @@ func (s *Server) Connect(stream models.ChatService_ConnectServer) error {
 			wg := sync.WaitGroup{}
 			timeMilli := time.Now().UnixNano() / 1e6
 			msg.Time = uint64(timeMilli)
+			uuid, err := uuid.DefaultGenerator.NewV4()
+			msg.Id = uuid.String()
 			log.Println(msg)
 			to, ok := s.Connections[msg.To]
 			if ok {

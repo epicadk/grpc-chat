@@ -1,7 +1,7 @@
 package db
 
 type Chat struct {
-	ID   uint64 // ID of the chat
+	ID   string // ID of the chat
 	From string `gorm:"not null;"`      // Sender of the chat
 	Body string `gorm:"not null;"`      // Body of the chat
 	To   string `gorm:"not null;index"` // Reciever of the chat
