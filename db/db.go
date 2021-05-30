@@ -49,21 +49,16 @@ func SetupDB() {
 		sslmode = "disable"
 	}
 
-	dns := fmt.Sprintf("host=%s user=%s password =%s dbname=%s port=%s sslmode=%s TimeZone=%s", host, user, pass, dbname, port, sslmode, tz)
+	dsn := fmt.Sprintf("host=%s user=%s password =%s dbname=%s port=%s sslmode=%s TimeZone=%s", host, user, pass, dbname, port, sslmode, tz)
 	//"host=db user=postgres password=postgres dbname=chats port=5432 sslmode=disable TimeZone=Asia/Kolkata"
 
-	DBconn, err = gorm.Open(postgres.Open(dns), &gorm.Config{})
+	DBconn, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 
 	if err != nil {
 		panic("error connecting to database")
 	}
 
-	err = DBconn.AutoMigrate(Chat{})
-	if err != nil {
-		panic("error in auto migration")
-	}
-
-	err = DBconn.AutoMigrate(&User{})
+	err = DBconn.AutoMigrate(&Chat{}, &User{})
 	if err != nil {
 		panic("error in auto migration")
 	}
