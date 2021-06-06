@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"errors"
 	"io"
 	"log"
 	"sync"
@@ -41,18 +40,15 @@ func (s *Server) Login(ctx context.Context, loginRequest *models.LoginRequest) (
 		res.Status = &models.Success{Value: false}
 		return res, status.Errorf(codes.Internal, "cannot find user: %v", err)
 	}
-
 	if user == nil || utils.ComparePassword(user.Password, loginRequest.Password) != nil {
 		res.Status = &models.Success{Value: false}
 		return res, status.Errorf(codes.NotFound, "incorrect username/password")
 	}
-
 	token, err := s.JwtManager.Generate(user.Phonenumber)
 	if err != nil {
 		res.Status = &models.Success{Value: false}
 		return res, status.Errorf(codes.Internal, "cannot generate access token")
 	}
-
 	res.Status = &models.Success{Value: true}
 	res.AccessToken = token
 	return res, nil
@@ -63,31 +59,17 @@ func (s *Server) Connect(stream models.ChatService_ConnectServer) error {
 		stream: stream,
 		err:    make(chan error),
 	}
-	md, ok := metadata.FromIncomingContext(stream.Context())
-	// should not happen because interceptor
-	if !ok {
-		return errors.New("no metadata")
-	}
+
+	md, _ := metadata.FromIncomingContext(stream.Context())
 	user := md.Get("user")[0]
+
 	messages, err := chatDao.FindChat(user)
 	if err != nil {
-		return err
+		return status.Errorf(codes.Internal, "cannot fetch messages")
 	}
+	sendLotsofMessages(userConnection, messages...)
+
 	s.Connections[user] = userConnection
-	log.Println(len(s.Connections), user)
-	for _, v := range messages {
-		go func(message *models.Message) {
-			if err := userConnection.stream.Send(message); err != nil {
-				userConnection.err <- err
-			}
-
-			// Delete only after message has been sent
-			if err := chatDao.DeleteChat(message); err != nil {
-				log.Fatal(err)
-			}
-
-		}(v)
-	}
 	go func() {
 		for {
 			msg, err := stream.Recv()
@@ -101,17 +83,18 @@ func (s *Server) Connect(stream models.ChatService_ConnectServer) error {
 			wg := sync.WaitGroup{}
 			timeMilli := time.Now().UnixNano() / 1e6
 			msg.Time = uint64(timeMilli)
-			log.Println(msg)
 			to, ok := s.Connections[msg.To]
 			if ok {
 				wg.Add(1)
-				go func(msg *models.Message, conn *Connection, wg *sync.WaitGroup) {
-					defer wg.Done()
-					if err := conn.stream.Send(msg); err != nil {
-						conn.err <- err
-						delete(s.Connections, msg.To)
-					}
-				}(msg, to, &wg)
+				go sendMessage(msg, to, &wg, s.Connections)
+				wg.Add(1)
+				go sendMessage(&models.Message{
+					Id:     msg.Id,
+					From:   msg.To,
+					Time:   uint64(time.Now().UnixNano() / 1e6),
+					Type:   models.Message_STATUS,
+					Status: models.Message_DELIVERED,
+				}, userConnection, &wg, s.Connections)
 			}
 			wg.Wait()
 			if !ok {
@@ -119,6 +102,14 @@ func (s *Server) Connect(stream models.ChatService_ConnectServer) error {
 				if err != nil {
 					log.Fatal(err)
 				}
+				wg.Add(1)
+				go sendMessage(&models.Message{
+					Id:     msg.Id,
+					From:   msg.To,
+					Time:   uint64(time.Now().UnixNano() / 1e6),
+					Type:   models.Message_STATUS,
+					Status: models.Message_SENT,
+				}, userConnection, &wg, s.Connections)
 			}
 		}
 	}()
@@ -136,4 +127,32 @@ func (s *Server) Register(ctx context.Context, user *models.User) (*models.Succe
 	}
 
 	return &models.Success{Value: true}, nil
+}
+
+func sendLotsofMessages(userConnection *Connection, messages ...*models.Message) {
+	for _, v := range messages {
+		go func(message *models.Message) {
+			if err := userConnection.stream.Send(message); err != nil {
+				userConnection.err <- err
+			}
+
+			// Delete only after message has been sent
+			if err := chatDao.DeleteChat(message); err != nil {
+				log.Fatal(err)
+			}
+
+		}(v)
+	}
+}
+
+func sendMessage(msg *models.Message, conn *Connection, wg *sync.WaitGroup, connections map[string]*Connection) {
+	defer wg.Done()
+	if err := conn.stream.Send(msg); err != nil {
+		conn.err <- err
+		delete(connections, msg.To)
+		err := chatDao.CreateChat(msg)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
 }
