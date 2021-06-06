@@ -91,6 +91,7 @@ func (s *Server) Connect(stream models.ChatService_ConnectServer) error {
 				go sendMessage(&models.Message{
 					Id:     msg.Id,
 					From:   msg.To,
+					To:     msg.From,
 					Time:   uint64(time.Now().UnixNano() / 1e6),
 					Type:   models.Message_STATUS,
 					Status: models.Message_DELIVERED,
