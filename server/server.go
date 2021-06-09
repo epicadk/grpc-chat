@@ -92,9 +92,14 @@ func (s *Server) Connect(stream models.ChatService_ConnectServer) error {
 		for {
 			msg, err := stream.Recv()
 			if err == io.EOF {
+				userConnection.err <- nil
 				return
 			}
 			if err != nil {
+				if err.Error() == status.New(codes.Canceled, context.Canceled.Error()).Err().Error() {
+					log.Println(user, ": Device offline")
+					delete(s.Connections, user)
+				}
 				userConnection.err <- err
 				return
 			}
