@@ -10,6 +10,20 @@ message Message{
     string Body = 3;  
     string To = 4;
     uint64 Time = 5;
+    enum Status {
+        PENDING = 0;
+        SENT = 1;
+        DELIVERED = 2;
+        READ = 3;
+    }
+    Status status = 6;
+    enum Type {
+        TEXT = 0;
+        MEDIA = 1; 
+        STATUS = 2; 
+    }
+    Type type = 7;
+    string media_url = 8;
 }
 
 message Success{
